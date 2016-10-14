@@ -16,11 +16,13 @@ module Kemal
       process_request(context)
     end
 
-    # Adds a given route to routing tree. As an exception each `GET` route additionaly defines
-    # a corresponding `HEAD` route.
+    # Adds a given route to routing tree. If the path is an array of paths, a route
+    # is added for each path in the array. As an exception each `GET` route 
+    # additionaly defines a corresponding `HEAD` route.
     def add_route(method, path, &handler : HTTP::Server::Context -> _)
+      return path.each { |p| add_route method, p, &handler} if path.is_a? Array
+      add_route("HEAD", path, &handler) if method == "GET"
       add_to_radix_tree method, path, Route.new(method, path, &handler)
-      add_to_radix_tree("HEAD", path, Route.new("HEAD", path, &handler)) if method == "GET"
     end
 
     # Check if a route is defined and returns the lookup
